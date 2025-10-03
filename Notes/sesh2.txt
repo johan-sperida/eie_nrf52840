@@ -1,0 +1,47 @@
+Had to do this first:
+git remote add upstream https://github.com/eiefirmware/eie_nrf52840.git
+
+
+
+Git Workflow for Future Lessons
+In general, a good Git process to follow for EiE is as follows:
+
+Checkout the main branch
+Pull any remote changes to your local repo to ensure that the main branch is up-to-date
+Create a lesson# branch (e.g. lesson2)
+Do all work for that lesson on that branch
+Create commits at points where you've achieved a goal/milestone, completed a "substantial" amount of work or other similar marker
+At the end of the lesson, push your lesson# branch to GitHub
+
+
+
+Learning:
+- Git often just copies changes
+
+- If branching, changes only apply to current branch
+- git branch <name>
+- git checkout <name>
+    - allows you to go to that branch
+    - type checkout -b <name> make and go
+- git merge <name> 
+    - merges that branch back to main
+
+- git rebase <name>
+    - takes current branch and applies it to <name>
+
+- git clone 
+    - clones a repo and makes a remote repo on local device
+    - makes a remote branch that keeps track of original repo with fetch
+    - main remote is origin/main
+    -                <branch/repo>
+
+- git fetch
+    - gets commits from the remote repo and updates via the remote branch
+    - makes a new branch
+    - must merge origin/main to local main
+
+- git Pull
+    - fetches and merges the new branch to local main
+
+
+

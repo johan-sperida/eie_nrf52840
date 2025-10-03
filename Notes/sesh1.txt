@@ -1,0 +1,17 @@
+Had to start:
+source .venv/Scripts/activate 
+
+In:
+/c/Users/cryst/zephyr-projects/
+
+Full address:
+/c/Users/cryst/zephyr-projects/eie_nrf52840.git/
+
+Legacy drivers from Jlink Installer
+
+had to run:
+west flash --recover
+
+Pierre
+
+
