@@ -6,3 +6,16 @@ git checkout embedded_primer
 
 git add app/CMakeLists.txt app/prj.conf app/src/main.c
 git commit -m "Setup project configuration"
+
+all your stuff exists on your own system
+
+copy by val not ref
+
+push goes to your local 
+fetch comes from upstream and into your locals
+syncing takes upstream and puts on local
+
+matt: curly hair, shoulder_length, glasses, tall
+start venv in zephyr proj 
+
+
