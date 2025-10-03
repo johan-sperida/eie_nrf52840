@@ -3,3 +3,6 @@ git config --global user.name "Your Name"
 
 git fetch upstream
 git checkout embedded_primer
+
+git add app/CMakeLists.txt app/prj.conf app/src/main.c
+git commit -m "Setup project configuration"
