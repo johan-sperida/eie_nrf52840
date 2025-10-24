@@ -28,11 +28,13 @@ int main(void) {
 
   while(1) {
 
+    //polls the state machine
+    //runs the run function based on the state it is in
     int ret = state_machine_run();
     if (0 > ret) {
         return 0;
     }
-    
+
     k_msleep(SLEEP_MS);
   }
 	return 0;

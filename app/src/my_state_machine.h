@@ -2,8 +2,8 @@
  * @file  my_state_machine.h
  * */ 
 
-#ifndef MY STATE MACHINE W
-#define MY_STATE MACHINE H
+#ifndef MY_STATE_MACHINE_H
+#define MY_STATE_MACHINE_H
 
 void state_machine_init();
 

@@ -5,6 +5,7 @@
 
  #include <zephyr/smf.h>
 
+ #include "BTN.h"
  #include "LED.h"
  #include "my_state_machine.h"
 
@@ -38,7 +39,7 @@ static const struct smf_state led_states[]= {
 //a struct to keep track of state?
 static led_state_object_t led_state_object;
 
-//runs on intialization?
+//runs on intialization
 void state_machine_init(){
     led_state_object.count = 0;
     //set some initial state with the state object
@@ -48,6 +49,7 @@ void state_machine_init(){
 
 int state_machine_run(){
     //poll the state from the object
+    //updates based on states
     return smf_run_state(SMF_CTX(&led_state_object));
 }
 
@@ -56,12 +58,12 @@ static void led_on_state_entry(void* o) {
 }
 
 static enum smf_state_result led_on_state_run(void* o) {
-    if (led_state_object.count > 500) {
-        led_state_object.count = 0;
+    //constantly updates the count val
+    if (BTN_check_clear_pressed(BTN0)) {
+
+        //switches to off state
         smf_set_state(SMF_CTX(&led_state_object), &led_states[LED_OFF_STATE]);
-    } else {
-        led_state_object.count++;
-    }
+    } 
     return SMF_EVENT_HANDLED;
 }
 
@@ -70,11 +72,9 @@ static void led_off_state_entry(void* o) {
 }
 
 static enum smf_state_result led_off_state_run(void* o) {
-    if (led_state_object.count > 500) {
-        led_state_object.count = 0;
+    if (BTN_check_clear_pressed(BTN1)) {
+
         smf_set_state(SMF_CTX(&led_state_object), &led_states[LED_ON_STATE]);
-    } else {
-        led_state_object.count++;
     }
     return SMF_EVENT_HANDLED;
 }
