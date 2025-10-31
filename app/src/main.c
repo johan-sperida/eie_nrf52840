@@ -21,8 +21,21 @@ int main(void) {
     return 0;
   }
 
+  int result = 0b0;
+  
+
   while(1) {
-    k_msleep(SLEEP_MS);
+    if (BTN_check_clear_pressed(BTN0)) {
+      result = (result << 1) | 0;
+    }
+    if (BTN_check_clear_pressed(BTN1)) {
+      result = (result << 1) | 1;
+    }
+    printk("%d.\n", result);
+
+    k_msleep(SLEEP_MS * 100);
+
+    
   }
 	return 0;
 }
