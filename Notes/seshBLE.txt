@@ -1,0 +1,1 @@
+Profiles and Services are standardized so other products can communicate with them

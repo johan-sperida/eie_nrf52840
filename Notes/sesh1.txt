@@ -15,3 +15,13 @@ west flash --recover
 Pierre
 
 
+west build -b nrf52840dk/nrf52840 app
+west flash
+
+cd /c/Users/cryst/zephyr-projects/; source .venv/Scripts/activate; cd eie_nrf52840.git/
+
+cd ~/zephyr-projects/; source .venv/bin/activate; cd eie_nrf52840.git/
+
+west build -b nrf52840dk/nrf52840 app; west flash
+
+west build -b nrf52840dk/nrf52840 app --pristine; west flash
