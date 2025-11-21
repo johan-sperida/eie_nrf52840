@@ -1,0 +1,3 @@
+[submodule "Embedded-notes"]
+	path = Embedded-notes
+	url = https://github.com/johan-sperida/Embedded-notes.git
