@@ -1,0 +1,2 @@
+[[ ":$PATH:" != *":$new_dir:"* ]] && export PATH="$PATH:$new_dir" tee -a /etc/profile
+[[ ":$PATH:" != *":$new_dir:"* ]] && export PATH="$PATH:$new_dir" tee -a /etc/profile
