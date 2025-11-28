@@ -9,5 +9,12 @@
     {
       "path": "../../zephyr/include"
     }
-  ]
+  ],
+  "settings": {
+    "files.associations": {
+      "typeinfo": "c",
+      "text_encoding": "c",
+      "ranges": "c"
+    }
+  }
 }

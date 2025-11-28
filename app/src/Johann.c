@@ -2,15 +2,6 @@
  * main.c
  */
 
-#include <inttypes.h>
-
-#include <zephyr/kernel.h>
-#include <zephyr/sys/printk.h>
-
-#include "BTN.h"
-#include "LED.h"
-
-
 #include <stdio.h>
 #include <string.h>
 #include <zephyr/bluetooth/bluetooth.h>
@@ -22,42 +13,29 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/display.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/kernel.h>
 #include <zephyr/settings/settings.h>
+#include <zephyr/sys/printk.h>
+#include <inttypes.h>
 
+#define BLE_CUSTOM_SERVICE_UUID BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef0)
+#define BLE_CUSTOM_CHARACTERISTIC_UUID BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef0)
 
-#define SLEEP_MS 1
-
-//copied this over from the other file
 #define BLE_CUSTOM_CHARACTERISTIC_MAX_DATA_LENGTH 20
 
-//stuck this in from the main file
-#define BLE_CUSTOM_SERVICE_UUID \
-  BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef0)
-#define BLE_CUSTOM_CHARACTERISTIC_UUID \
-  BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef0)
-
- //array of bbt_data structs for advertising
 static const struct bt_data ble_advertising_data[] = {
-                              //general discoveraliblity mode, only support BLE
   BT_DATA_BYTES(BT_DATA_FLAGS, BT_LE_AD_GENERAL, BT_LE_AD_NO_BREDR),
   BT_DATA(BT_DATA_NAME_COMPLETE, CONFIG_BT_DEVICE_NAME, sizeof(CONFIG_BT_DEVICE_NAME)),
 };
 
-//data buffer
-//20 bits is just small enough to work with most devices
-//can be bigger
 static uint8_t ble_custom_characteristic_user_data[20] = {};
 
-//read callback
-//runs whenever connected device reads
 static ssize_t ble_custom_characteristic_read_cb(struct bt_conn* conn, const struct bt_gatt_attr* attr,
                                                  void* buf, uint16_t len, uint16_t offset) {
   const char* value = attr->user_data;
   return bt_gatt_attr_read(conn, attr, buf, len, offset, value, strlen(value));
 }
 
-//write callback
-//when connected device writes
 static ssize_t ble_custom_characteristic_write_cb(struct bt_conn* conn, const struct bt_gatt_attr* attr,
                                                   const void* buf, uint16_t len, uint16_t offset,
                                                   uint8_t flags) {
@@ -67,28 +45,18 @@ static ssize_t ble_custom_characteristic_write_cb(struct bt_conn* conn, const st
     return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
   }
 
-  memcpy(value_ptr + offset, buf, len); 
+  memcpy(value_ptr + offset, buf, len);
   value_ptr[offset + len] = 0;
-
-  printk("[BLE] ble_custom_service_write (%d, %d):", offset, len);
-  for (uint16_t i = 0; i < len; i++) {
-    printk("%s %02X '%c'", i == 0 ? "" : ",", value_ptr[offset + i], value_ptr[offset + i]);
-  }
-  printk("\n");
 
   return len;
 }
 
-//service and characteristic description
 static const struct bt_uuid_128 ble_custom_service_uuid = BT_UUID_INIT_128(BLE_CUSTOM_SERVICE_UUID);
 static const struct bt_uuid_128 ble_custom_characteristic_uuid = BT_UUID_INIT_128(BLE_CUSTOM_CHARACTERISTIC_UUID);
 
-//service definition
 BT_GATT_SERVICE_DEFINE(
     ble_custom_service,  // Name of the struct that will store the config for this service
     BT_GATT_PRIMARY_SERVICE(&ble_custom_service_uuid),  // Setting the service UUID
-    
-    //characteristic definition
     BT_GATT_CHARACTERISTIC(
         &ble_custom_characteristic_uuid.uuid,  // Setting the characteristic UUID
         BT_GATT_CHRC_READ | BT_GATT_CHRC_WRITE,  // Possible operations
@@ -97,36 +65,31 @@ BT_GATT_SERVICE_DEFINE(
         ble_custom_characteristic_write_cb,    // Callback for when this characteristic is written to
         ble_custom_characteristic_user_data    // Initial data stored in this characteristic
         )
-
 );
 
 
-int main(void) {
 
-  if (0 > BTN_init()) {
+int main(void) 
+{
+  int err_code = bt_enable(NULL);
+  if (err_code != 0)
+  {
+    printk("Error code %d\n", err_code);
     return 0;
   }
-  if (0 > LED_init()) {
+
+  err_code = bt_le_adv_start(BT_LE_ADV_CONN_FAST_1,
+     ble_advertising_data, 
+     ARRAY_SIZE(ble_advertising_data),
+    NULL,
+    0);
+
+  if (err_code != 0)
+  {
+    printk("Error code %d\n", err_code);
     return 0;
   }
 
-  //BLE start
-  //synchornous intialization
-  if (0 != bt_enable(NULL)) {
-    return -1;
-  }
 
-  //start advertising
-  int retVal = bt_le_adv_start(BT_LE_ADV_CONN_FAST_1, ble_advertising_data, ARRAY_SIZE(ble_advertising_data), NULL, 0);
-
-  if (0 != retVal) {
-    printk("%d", retVal);
-  }
-
-
-
-  while(1) {
-    k_msleep(SLEEP_MS);
-  }
 	return 0;
 }
