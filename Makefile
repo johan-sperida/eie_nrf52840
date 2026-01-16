@@ -1,8 +1,6 @@
-#only creates venv for its own instance of a terminal
-#venv
-venv:
-	@cd ~/zephyr-projects/; source .venv/bin/activate; cd eie_nrf52840.git/
-
+init:
+	cd ~/zephyr-projects/; source .venv/bin/activate; cd eie_nrf52840.git/
+ 
 #Build
 build: venv
 	west build -b nrf52840dk/nrf52840 app --pristine
