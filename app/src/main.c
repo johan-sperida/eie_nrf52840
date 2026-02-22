@@ -52,6 +52,8 @@ int main(void) {
 
   sceneInit(&scene1, activeScreen);
   lv_obj_set_style_bg_color(scene1.parent, lv_color_hex(0xFF0000), 0); 
+  lv_obj_t* rect1 = lv_obj_create(scene1.parent);
+  lv_obj_set_style_bg_color(rect1, lv_color_hex(0xFFFF00), 0); 
 
 
   //-----------------------------------------------
@@ -59,12 +61,22 @@ int main(void) {
 
   sceneInit(&scene2, topScreen);
   lv_obj_set_style_bg_color(scene2.parent, lv_color_hex(0x000000), 0);  // Black background
+  lv_obj_t* label2 = lv_label_create(scene2.parent);
+  lv_label_set_text(label2, "Start");
+  
 
-
+  char c = 0;
   while (1) {
     //must call periodically to render changes
     lv_timer_handler();
     k_msleep(SLEEP_MS);
+
+    lv_label_set_text(label2, &c);
+    c++;
+
+    if (c >= 100) c=0;
+
+    lv_obj_set_size(rect1,LV_PCT((int)c), LV_PCT((int)c));
 
     if (BTN_check_clear_pressed(BTN0)){
       lv_obj_set_parent(scene1.parent, topScreen);
