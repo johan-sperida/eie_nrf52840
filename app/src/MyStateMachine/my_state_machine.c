@@ -3,22 +3,47 @@
  * 
  */
 
- #include <zephyr/smf.h>
+#include <zephyr/smf.h>
+#include <zephyr/kernel.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/drivers/display.h>
+#include <zephyr/device.h>
 
- #include "BTN.h"
- #include "LED.h"
- #include "my_state_machine.h"
 
-//function prototypes
-static void led_on_state_entry(void* o);
-static enum smf_state_result led_on_state_run(void* o);
-static void led_off_state_entry(void* o);
-static enum smf_state_result led_off_state_run(void* o);
+#include <lvgl.h>
+
+#include "BTN.h"
+#include "LED.h"
+#include "lv_data_obj.h"
+#include "scenes.h"
+#include "my_state_machine.h"
+
+//Forward declarations for scene functions
+static void scene1_enter(void* v_scene, void* o);
+static int scene1_run(void* v_scene, void* o);
+static void scene2_enter(void* v_scene, void* o);
+static int scene2_run(void* v_scene, void* o);
+
+//Forward declarations for state machine functions
+static void menu_state_entry(void* o);
+static enum smf_state_result menu_state_run(void* o);
+static void menu_state_exit(void* o);
+static void transition_state_entry(void* o);
+static enum smf_state_result transition_state_run(void* o);
+static void transition_state_exit(void* o);
+static void minigame_state_entry(void* o);
+static enum smf_state_result minigame_state_run(void* o);
+static void minigame_state_exit(void* o);
+static void loss_state_entry(void* o);
+static enum smf_state_result loss_state_run(void* o);
+static void loss_state_exit(void* o);
 
 //Typedefs
-enum led_state_machine_states {
-    LED_ON_STATE,
-    LED_OFF_STATE
+enum game_states {
+    MENU_STATE,
+    TRANSITION_STATE,
+    MINIGAME_STATE,
+    LOSS_STATE
 };
 
 //"typedef" makes it so that you don't have to write "sturct" next to the name each time when intiializing
@@ -26,55 +51,169 @@ typedef struct {
     //context variable for machines state
     struct smf_ctx ctx;
 
-    uint16_t count;
-} led_state_object_t;
+    uint8_t levelCount;
+    uint8_t lives;
+    scene topScene;
 
-//Local vars
-//seems to define what each state is
-static const struct smf_state led_states[]= {
-    [LED_ON_STATE] = SMF_CREATE_STATE(led_on_state_entry, led_on_state_run, NULL, NULL, NULL),
-    [LED_OFF_STATE] = SMF_CREATE_STATE(led_off_state_entry, led_off_state_run, NULL, NULL, NULL)
+} game_state_t;
+
+// Local vars
+// Define the state table using the enum values and naming conventions
+static const struct smf_state game_states[] = {
+    [MENU_STATE] = SMF_CREATE_STATE(menu_state_entry, menu_state_run, menu_state_exit, NULL, NULL),
+    [TRANSITION_STATE] = SMF_CREATE_STATE(transition_state_entry, transition_state_run, transition_state_exit, NULL, NULL),
+    [MINIGAME_STATE] = SMF_CREATE_STATE(minigame_state_entry, minigame_state_run, minigame_state_exit, NULL, NULL),
+    [LOSS_STATE] = SMF_CREATE_STATE(loss_state_entry, loss_state_run, loss_state_exit, NULL, NULL),
 };
 
 //a struct to keep track of state?
-static led_state_object_t led_state_object;
+static game_state_t game_state_object;
+
+
+//Scenes -------------------------------------------------------------
+
+static scene menuStateScene;
+
+static scene transitionStateScene;
+
+//The first minigame scene
+static scene minigameStateScene;
+
+//The first transition scene
+static scene transitionScene;
+
+static scene scene1 = {
+    .enterFunc = &scene1_enter,
+    .runFunc   = &scene1_run,
+};
+
+static scene scene2 = {
+    .enterFunc = &scene2_enter,
+    .runFunc   = &scene2_run,
+};
+
+
+static void scene1_enter(void* v_scene, void* o){
+    scene* p_scene = v_scene;
+
+    lv_obj_set_style_bg_color(p_scene->parent, lv_color_hex(0xFF0000), 0); 
+
+    lv_obj_t* rect1 = lv_obj_create(p_scene->parent);
+    lv_obj_set_style_bg_color(rect1, lv_color_hex(0xFFFF00), 0); 
+    lv_obj_set_name(rect1, "rect1");
+
+    lv_screen_load_anim(p_scene->screen,LV_SCR_LOAD_ANIM_MOVE_LEFT,1,1,true);
+
+}
+
+static int scene1_run(void* v_scene, void* o) {
+    scene* p_scene = v_scene;
+    int* val = o;
+  if (!lv_obj_is_valid(p_scene->screen)){
+    lv_obj_set_size(getChild(p_scene->parent, "rect1"), LV_PCT(*val), LV_PCT(*val));
+  }
+
+}
+
+
+static void scene2_enter(void* v_scene, void* o){
+  scene* p_scene = v_scene;
+
+  lv_obj_set_style_bg_color(p_scene->parent, lv_color_hex(0x000000), 0);  // Black background
+
+  lv_obj_t* label2 = lv_label_create(p_scene->parent);
+  lv_label_set_text(label2, "Start");
+  lv_obj_set_name(label2, "label2");
+
+  lv_screen_load_anim(p_scene->screen,LV_SCR_LOAD_ANIM_FADE_IN,1,1,true);
+}
+
+static int scene2_run(void* v_scene, void* o) {
+    scene* p_scene = v_scene;
+    char* val = o;
+
+    if (!lv_obj_is_valid(p_scene->screen)){
+      lv_label_set_text(getChild(p_scene->parent, "label2"), val);
+    }
+
+    if (BTN_check_clear_pressed(BTN0)){
+    smf_set_state(SMF_CTX(&game_state_object), &game_states[MINIGAME_STATE]);
+  }
+} 
+
+
+                                                        // Menu
+static void menu_state_entry(void* o) {
+    sceneInit(&scene2);
+}
+
+static enum smf_state_result menu_state_run(void* o) {
+    scene2.runFunc(&scene2,o);
+    if (BTN_check_clear_pressed(BTN0)){
+        smf_set_state(SMF_CTX(&game_state_object), &game_states[MINIGAME_STATE]);
+    }
+    return SMF_EVENT_HANDLED;
+}
+
+static void menu_state_exit(void* o) {
+}
+
+                                                        //Transition
+static void transition_state_entry(void* o) {
+}
+
+static enum smf_state_result transition_state_run(void* o) {
+    return SMF_EVENT_HANDLED;
+}
+
+static void transition_state_exit(void* o) {
+}
+
+                                                        //Game
+static void minigame_state_entry(void* o) {
+    sceneInit(&scene1);
+}
+
+static enum smf_state_result minigame_state_run(void* o) {
+    scene1.runFunc(&scene1,o);
+    if (BTN_check_clear_pressed(BTN1)){
+        smf_set_state(SMF_CTX(&game_state_object), &game_states[MENU_STATE]);
+    }
+    return SMF_EVENT_HANDLED;
+}
+
+static void minigame_state_exit(void* o) {
+}
+
+                                                        //Loss
+static void loss_state_entry(void* o) {
+}
+
+static enum smf_state_result loss_state_run(void* o) {
+    return SMF_EVENT_HANDLED;
+}
+
+static void loss_state_exit(void* o) {
+}
 
 //runs on intialization
 void state_machine_init(){
-    led_state_object.count = 0;
-    //set some initial state with the state object
-    smf_set_initial(SMF_CTX(&led_state_object), &led_states[LED_ON_STATE]);
-}
+    game_state_object.levelCount = 0;
+    game_state_object.lives = 4;
 
+    //set some initial state with the state object
+    smf_set_initial(SMF_CTX(&game_state_object), &game_states[MENU_STATE]);
+}
 
 int state_machine_run(){
     //poll the state from the object
     //updates based on states
-    return smf_run_state(SMF_CTX(&led_state_object));
+    lv_timer_handler();
+    game_state_object.levelCount++;
+
+    if (game_state_object.levelCount >= 100) game_state_object.levelCount=0;
+
+    return smf_run_state(SMF_CTX(&game_state_object));
 }
 
-static void led_on_state_entry(void* o) {
-    LED_set(LED0, LED_ON);
-}
 
-static enum smf_state_result led_on_state_run(void* o) {
-    //constantly updates the count val
-    if (BTN_check_clear_pressed(BTN0)) {
-
-        //switches to off state
-        smf_set_state(SMF_CTX(&led_state_object), &led_states[LED_OFF_STATE]);
-    } 
-    return SMF_EVENT_HANDLED;
-}
-
-static void led_off_state_entry(void* o) {
-    LED_set(LED0, LED_OFF);
-}
-
-static enum smf_state_result led_off_state_run(void* o) {
-    if (BTN_check_clear_pressed(BTN1)) {
-
-        smf_set_state(SMF_CTX(&led_state_object), &led_states[LED_ON_STATE]);
-    }
-    return SMF_EVENT_HANDLED;
-}

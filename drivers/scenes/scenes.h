@@ -12,18 +12,24 @@
 #include "LED.h"
 #include "lv_data_obj.h"
 
-typedef void (*transitionFunc)(void* obj);
 
 
 typedef struct{
     lv_obj_t* parent;
+    lv_obj_t* screen;
+    
 
     //must be specific to each scene
-    transitionFunc enterFunc;
-    transitionFunc exitFunc;
-    enum smf_state_result (*runFunc)(void* obj);
+    void (*enterFunc)(void* v_scene,void* obj); //creates objects 
+    void (*exitFunc)(void* v_scene,void* obj);   //deletes screen
+    int (*runFunc)(void* v_scene, void* obj); //does logic
 } scene;
 
-void sceneInit(scene* scene, lv_obj_t* screen);
+void sceneInit(scene* scene);
 
-lv_obj_t* getChild(scene* parentScene, char* childName);
+void sceneClose(scene* scene);
+
+void reset(scene* scene);
+
+lv_obj_t* getChild(lv_obj_t* parent, char* childName);
+

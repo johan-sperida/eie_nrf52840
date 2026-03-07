@@ -14,12 +14,26 @@
 #include "scenes.h"
   
 
-void sceneInit(scene* scene, lv_obj_t * screen){
-    scene->parent = lv_obj_create(screen);
-    lv_obj_set_size(scene->parent, LV_PCT(100), LV_PCT(100));
+void sceneInit(scene* p_scene){
+  if (!lv_obj_is_valid(p_scene->screen)){
+    p_scene->screen = lv_obj_create(NULL);
+    p_scene->parent = lv_obj_create(p_scene->screen);
+    lv_obj_set_size(p_scene->parent, LV_PCT(100), LV_PCT(100));
+    p_scene->enterFunc(p_scene, NULL);
+  }
+    
 }
 
-lv_obj_t* getChild(scene* parentScene, char* childName){
-  return lv_obj_get_child_by_name(parentScene->parent, childName);
+void reset(scene* p_scene){
+  lv_obj_delete(p_scene->parent);
+  p_scene->parent = lv_obj_create(p_scene->screen);
+}
+
+void sceneClose(scene* p_scene){
+  lv_obj_delete(p_scene->screen);
+}
+
+lv_obj_t* getChild(lv_obj_t* parent, char* childName){
+  return lv_obj_get_child_by_name(parent, childName);
   
 } 
