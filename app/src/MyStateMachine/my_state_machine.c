@@ -113,6 +113,7 @@ static int scene1_run(void* v_scene, void* o) {
     lv_obj_set_size(getChild(p_scene->parent, "rect1"), LV_PCT(*val), LV_PCT(*val));
   }
 
+  
 }
 
 
@@ -136,9 +137,6 @@ static int scene2_run(void* v_scene, void* o) {
       lv_label_set_text(getChild(p_scene->parent, "label2"), val);
     }
 
-    if (BTN_check_clear_pressed(BTN0)){
-    smf_set_state(SMF_CTX(&game_state_object), &game_states[MINIGAME_STATE]);
-  }
 } 
 
 
@@ -151,6 +149,8 @@ static enum smf_state_result menu_state_run(void* o) {
     scene2.runFunc(&scene2,o);
     if (BTN_check_clear_pressed(BTN0)){
         smf_set_state(SMF_CTX(&game_state_object), &game_states[MINIGAME_STATE]);
+    } else {
+            BTN_check_clear_pressed_all();
     }
     return SMF_EVENT_HANDLED;
 }
@@ -178,6 +178,8 @@ static enum smf_state_result minigame_state_run(void* o) {
     scene1.runFunc(&scene1,o);
     if (BTN_check_clear_pressed(BTN1)){
         smf_set_state(SMF_CTX(&game_state_object), &game_states[MENU_STATE]);
+    } else {
+            BTN_check_clear_pressed_all();
     }
     return SMF_EVENT_HANDLED;
 }
@@ -212,6 +214,7 @@ int state_machine_run(){
     game_state_object.levelCount++;
 
     if (game_state_object.levelCount >= 100) game_state_object.levelCount=0;
+
 
     return smf_run_state(SMF_CTX(&game_state_object));
 }

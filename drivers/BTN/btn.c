@@ -161,6 +161,20 @@ bool BTN_check_clear_pressed(btn_id btn) {
   }
 }
 
+bool BTN_check_clear_pressed_all() {
+  bool val = false;
+  for (int btn = BTN0; btn < NUM_BTNS; btn++){
+    if (IS_INVALID_BTN(btn)) {
+      return false;
+    } else {
+      bool was_pressed = _btns[btn]->pressed;
+      _btns[btn]->pressed = false;
+      val = val || was_pressed;
+    }
+  }
+  
+}
+
 /**
  * @brief Checks if the given button has been pressed, doesn't clear the internal state flag
  * 
