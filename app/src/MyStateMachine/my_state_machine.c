@@ -109,11 +109,8 @@ static void scene1_enter(void* v_scene, void* o){
 static int scene1_run(void* v_scene, void* o) {
     scene* p_scene = v_scene;
     int* val = o;
-  if (!lv_obj_is_valid(p_scene->screen)){
-    lv_obj_set_size(getChild(p_scene->parent, "rect1"), LV_PCT(*val), LV_PCT(*val));
-  }
-
-  
+    
+    lv_obj_set_size(getChild(p_scene->parent, "rect1"), LV_PCT((int)*val/10 - 10), LV_PCT((int)*val/10 - 10));
 }
 
 
@@ -131,11 +128,12 @@ static void scene2_enter(void* v_scene, void* o){
 
 static int scene2_run(void* v_scene, void* o) {
     scene* p_scene = v_scene;
-    char* val = o;
-
-    if (!lv_obj_is_valid(p_scene->screen)){
-      lv_label_set_text(getChild(p_scene->parent, "label2"), val);
-    }
+    int* val = o;
+    char buffer[16];
+    int value = (int)*val;
+    sprintf(buffer, "%d", val);
+    lv_label_set_text(getChild(p_scene->parent, "label2"), buffer);
+    
 
 } 
 
@@ -146,7 +144,7 @@ static void menu_state_entry(void* o) {
 }
 
 static enum smf_state_result menu_state_run(void* o) {
-    scene2.runFunc(&scene2,o);
+    scene2_run(&scene2,&game_state_object.levelCount);
     if (BTN_check_clear_pressed(BTN0)){
         smf_set_state(SMF_CTX(&game_state_object), &game_states[MINIGAME_STATE]);
     } else {
@@ -175,7 +173,7 @@ static void minigame_state_entry(void* o) {
 }
 
 static enum smf_state_result minigame_state_run(void* o) {
-    scene1.runFunc(&scene1,o);
+    scene1.runFunc(&scene1,&game_state_object.levelCount);
     if (BTN_check_clear_pressed(BTN1)){
         smf_set_state(SMF_CTX(&game_state_object), &game_states[MENU_STATE]);
     } else {
