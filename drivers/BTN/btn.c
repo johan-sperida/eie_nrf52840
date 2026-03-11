@@ -173,6 +173,7 @@ bool BTN_check_clear_pressed_all() {
     }
   }
   
+  return val;
 }
 
 /**
