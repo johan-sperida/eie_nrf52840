@@ -252,7 +252,7 @@ static uint8_t notify_func(struct bt_conn* conn, struct bt_gatt_subscribe_params
   }
 
   printk("[NOTIFICATION] data %p length %u\n", data, length);
-  printk("%d", ((uint8_t*)data));
+  printk("%d", (*((uint8_t*)data)));
   printk("\n");
 
   return BT_GATT_ITER_CONTINUE;
