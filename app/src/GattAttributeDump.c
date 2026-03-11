@@ -24,48 +24,18 @@
 
 #define SLEEP_MS 1
 
-// /* Controls Service: 7859530f-0184-4854-9ffd-69504534e434 */
-// static struct bt_uuid_128 CONTROLS_SERVICE_UUID = 
-//     BT_UUID_INIT_128(BT_UUID_128_ENCODE(0x7859530f, 0x0184, 0x4854, 0x9ffd, 0x69504534e434));
+// #define BLE_CUSTOM_SERVICE_UUID \
+//   BT_UUID_128_ENCODE(0x11111111, 0x1111, 0x1111, 0x1111, 0x111111111111)
+// #define BLE_CUSTOM_CHARACTERISTIC_UUID \
+//   BT_UUID_128_ENCODE(0x11111111, 0x1111, 0x1111, 0x1111, 0x111111111112)
 
-// /* Lights Characteristic: 93e249c3-540c-47cf-b85a-61e27b9e2bfd */
-// static struct bt_uuid_128 LIGHTS_CHAR_UUID = 
-//     BT_UUID_INIT_128(BT_UUID_128_ENCODE(0x93e249c3, 0x540c, 0x47cf, 0xb85a, 0x61e27b9e2bfd));
+// #define SERVICE BT_UUID_DECLARE_128(BLE_CUSTOM_SERVICE_UUID)
+// #define CHARACTERISTIC BT_UUID_DECLARE_128(BLE_CUSTOM_CHARACTERISTIC_UUID)
 
-// /* Acceleration Characteristic: eea5d803-0013-4eb5-a50f-037642b17c93 */
-// static struct bt_uuid_128 ACCELERATION_CHAR_UUID = 
-//     BT_UUID_INIT_128(BT_UUID_128_ENCODE(0xeea5d803, 0x0013, 0x4eb5, 0xa50f, 0x037642b17c93));
-
-
-
-// /* Service: 11111111-2222-3333-4444-000000000001 */
-// static struct bt_uuid_128 BLE_CUSTOM_SERVICE_UUID =
-//     BT_UUID_INIT_128(BT_UUID_128_ENCODE(
-//         0x11111111, 0x2222, 0x3333, 0x4444, 0x000000000001));
-
-// /* Characteristic: 11111111-2222-3333-4444-000000000002 */
-// static struct bt_uuid_128 BLE_CUSTOM_CHARACTERISTIC_UUID =
-//     BT_UUID_INIT_128(BT_UUID_128_ENCODE(
-//         0x11111111, 0x2222, 0x3333, 0x4444, 0x000000000002));
-
-/* Target MAC: D8:3A:DD:9C:C0:19 */
-static const bt_addr_t TARGET_DEVICE_ADDR_T = {
-  .val = {0xD8, 0x3A, 0xDD, 0x9C, 0xC0, 0x19} // Bytes are reversed
-};
-
-//pack it into the right struct
-static const bt_addr_le_t TARGET_DEVICE_ADDR = {
-    .type = BT_ADDR_LE_RANDOM, 
-    .a = TARGET_DEVICE_ADDR_T
-};
-
-/* Distance Sense Service: aafcf96d-f5b8-47d3-9da2-00a610c3a1f9 */
-static struct bt_uuid_128 DISTANCE_SENSE_SERVICE_UUID = 
-    BT_UUID_INIT_128(BT_UUID_128_ENCODE(0xaafcf96d, 0xf5b8, 0x47d3, 0x9da2, 0x00a610c3a1f9));
-
-/* Distance Characteristic: 044e6f5f-4a31-417a-86d5-886292a9ebb5 */
-static struct bt_uuid_128 DISTANCE_CHAR_UUID = 
-    BT_UUID_INIT_128(BT_UUID_128_ENCODE(0x044e6f5f, 0x4a31, 0x417a, 0x86d5, 0x886292a9ebb5));
+static struct bt_uuid_128 BLE_CUSTOM_SERVICE_UUID =
+    BT_UUID_INIT_128(BT_UUID_128_ENCODE(0x11111111, 0x1111, 0x1111, 0x1111, 0x111111111111));
+static struct bt_uuid_128 BLE_CUSTOM_CHARACTERISTIC_UUID =
+    BT_UUID_INIT_128(BT_UUID_128_ENCODE(0x11111112, 0x1111, 0x1111, 0x1111, 0x111111111111));
 
 /* PROTOTYPES ----------------------------------------------------------------------------------- */
 
@@ -120,18 +90,10 @@ static void ble_on_advertisement_received(const bt_addr_le_t* addr, int8_t rssi,
   if (rssi < -40) {
     return;
   }
-  printk("Passed rssi\n");
 
   if (bt_le_scan_stop()) {
     return;
   }
-   printk("Passed stop scan\n");
-
-  //check if the PICO
-  if (bt_addr_cmp(addr, &TARGET_DEVICE_ADDR) != 0) {
-      return;
-  }
-  printk("Passed compare\n");
 
   err = bt_conn_le_create(addr, BT_CONN_LE_CREATE_CONN, BT_LE_CONN_PARAM_DEFAULT, &my_connection);
   if (err) {
@@ -177,11 +139,11 @@ static void ble_on_device_connected(struct bt_conn* conn, uint8_t err) {
 
   printk("Connected: %s\n", addr);
 
-  discover_params.uuid = &DISTANCE_SENSE_SERVICE_UUID.uuid;
+  discover_params.uuid = NULL; // Switched from &BLE_CUSTOM_SERVICE_UUID.uuid
   discover_params.func = discover_func;
   discover_params.start_handle = BT_ATT_FIRST_ATTRIBUTE_HANDLE;
   discover_params.end_handle = BT_ATT_LAST_ATTRIBUTE_HANDLE;
-  discover_params.type = BT_GATT_DISCOVER_PRIMARY;
+  discover_params.type = BT_GATT_DISCOVER_ATTRIBUTE; //Switched from BT_GATT_DISCOVER_PRIMARY
 
   err = bt_gatt_discover(my_connection, &discover_params);
   if (err) {
@@ -209,7 +171,7 @@ static void ble_on_device_disconnected(struct bt_conn* conn, uint8_t reason) {
   ble_start_scanning();
 }
 
-static uint8_t discover_func(struct bt_conn* conn, const struct bt_gatt_attr* attr,
+static uint8_t discover_func1(struct bt_conn* conn, const struct bt_gatt_attr* attr,
                              struct bt_gatt_discover_params* params) {
   int err;
 
@@ -219,10 +181,21 @@ static uint8_t discover_func(struct bt_conn* conn, const struct bt_gatt_attr* at
     return BT_GATT_ITER_STOP;
   }
 
+  // attr->user_data contains the bt_gatt_service_val which holds the UUID
+  char uuid_str[BT_UUID_STR_LEN];
+  struct bt_gatt_service_val *gatt_service = attr->user_data;
+  
+  bt_uuid_to_str(gatt_service->uuid, uuid_str, sizeof(uuid_str));
+
+  printk("Found Service: %s (Handle: %u)\n", uuid_str, attr->handle);
+
+
+
+
   printk("[ATTRIBUTE] handle %u\n", attr->handle);
 
-  if (!bt_uuid_cmp(discover_params.uuid, &DISTANCE_SENSE_SERVICE_UUID.uuid)) {
-    discover_params.uuid = &DISTANCE_CHAR_UUID.uuid;
+  if (!bt_uuid_cmp(discover_params.uuid, &BLE_CUSTOM_SERVICE_UUID.uuid)) {
+    discover_params.uuid = &BLE_CUSTOM_CHARACTERISTIC_UUID.uuid;
     discover_params.start_handle = attr->handle + 1;
     discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
 
@@ -230,7 +203,7 @@ static uint8_t discover_func(struct bt_conn* conn, const struct bt_gatt_attr* at
     if (err) {
       printk("Discover failed (err %d)\n", err);
     }
-  } else if (!bt_uuid_cmp(discover_params.uuid, &DISTANCE_CHAR_UUID.uuid)) {
+  } else if (!bt_uuid_cmp(discover_params.uuid, &BLE_CUSTOM_CHARACTERISTIC_UUID.uuid)) {
     memcpy(&discover_uuid, BT_UUID_GATT_CCC, sizeof(discover_uuid));
     discover_params.uuid = &discover_uuid.uuid;
     discover_params.start_handle = attr->handle + 2;
@@ -256,13 +229,42 @@ static uint8_t discover_func(struct bt_conn* conn, const struct bt_gatt_attr* at
     return BT_GATT_ITER_STOP;
   }
 
-  return BT_GATT_ITER_STOP;  
+  return BT_GATT_ITER_CONTINUE;  //Was replaced from BT_GATT_ITER_STOP
+}
+
+static uint8_t discover_func(struct bt_conn *conn,
+                             const struct bt_gatt_attr *attr,
+                             struct bt_gatt_discover_params *params)
+{
+    if (!attr) {
+        printk("--- End of GATT Table ---\n");
+        return BT_GATT_ITER_STOP;
+    }
+
+    char type_uuid[BT_UUID_STR_LEN];
+    char value_uuid[BT_UUID_STR_LEN] = "N/A";
+
+    // Convert the Attribute Type UUID to string (e.g., 2800, 2803, 2902)
+    bt_uuid_to_str(attr->uuid, type_uuid, sizeof(type_uuid));
+
+    // If it's a Service (0x2800) or Characteristic (0x2803), the "Value" is a UUID
+    if (!bt_uuid_cmp(attr->uuid, BT_UUID_GATT_PRIMARY) ||
+        !bt_uuid_cmp(attr->uuid, BT_UUID_GATT_SECONDARY)) {
+        struct bt_gatt_service_val *val = attr->user_data;
+        bt_uuid_to_str(val->uuid, value_uuid, sizeof(value_uuid));
+    } else if (!bt_uuid_cmp(attr->uuid, BT_UUID_GATT_CHRC)) {
+        struct bt_gatt_chrc *val = attr->user_data;
+        bt_uuid_to_str(val->uuid, value_uuid, sizeof(value_uuid));
+    }
+
+    printk("[Handle %u] Type: %s | Value: %s\n", 
+           attr->handle, type_uuid, value_uuid);
+
+    return BT_GATT_ITER_CONTINUE;
 }
 
 static uint8_t notify_func(struct bt_conn* conn, struct bt_gatt_subscribe_params* params,
                            const void* data, uint16_t length) {
-
-  //responds to flags that may indicate unsubbing
   if (!data) {
     printk("[UNSUBSCRIBED]\n");
     params->value_handle = 0U;
@@ -271,9 +273,7 @@ static uint8_t notify_func(struct bt_conn* conn, struct bt_gatt_subscribe_params
 
   printk("[NOTIFICATION] data %p length %u\n", data, length);
   for (int i = 0; i < MIN(length, 16); i++) {
-
-    //basically prints it out going byte by byte
-    printk("%d", ((uint8_t*)data)[i]);
+    printk(" 0x%02X", ((uint8_t*)data)[i]);
   }
   printk("\n");
 
