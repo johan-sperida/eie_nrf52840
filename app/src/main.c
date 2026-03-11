@@ -38,30 +38,12 @@
 
 
 
-// /* Service: 11111111-2222-3333-4444-000000000001 */
-// static struct bt_uuid_128 BLE_CUSTOM_SERVICE_UUID =
-//     BT_UUID_INIT_128(BT_UUID_128_ENCODE(
-//         0x11111111, 0x2222, 0x3333, 0x4444, 0x000000000001));
-
-// /* Characteristic: 11111111-2222-3333-4444-000000000002 */
-// static struct bt_uuid_128 BLE_CUSTOM_CHARACTERISTIC_UUID =
-//     BT_UUID_INIT_128(BT_UUID_128_ENCODE(
-//         0x11111111, 0x2222, 0x3333, 0x4444, 0x000000000002));
-
 /* Target MAC: D8:3A:DD:9C:C0:19 */
-static const bt_addr_t TARGET_DEVICE_ADDR_T = {
-  .val = {0xD8, 0x3A, 0xDD, 0x9C, 0xC0, 0x19} // Bytes are reversed
-};
-
-//pack it into the right struct
-static const bt_addr_le_t TARGET_DEVICE_ADDR = {
-    .type = BT_ADDR_LE_RANDOM, 
-    .a = TARGET_DEVICE_ADDR_T
-};
+static const uint8_t TARGET_MAC[6] = {0xD8, 0x3A, 0xDD, 0x9C, 0xC0, 0x19};
 
 /* Distance Sense Service: aafcf96d-f5b8-47d3-9da2-00a610c3a1f9 */
-static struct bt_uuid_128 DISTANCE_SENSE_SERVICE_UUID = 
-    BT_UUID_INIT_128(BT_UUID_128_ENCODE(0xaafcf96d, 0xf5b8, 0x47d3, 0x9da2, 0x00a610c3a1f9));
+static struct bt_uuid_16 DISTANCE_SENSE_SERVICE_UUID = 
+    BT_UUID_INIT_16(0x180A);
 
 /* Distance Characteristic: 044e6f5f-4a31-417a-86d5-886292a9ebb5 */
 static struct bt_uuid_128 DISTANCE_CHAR_UUID = 
@@ -128,7 +110,7 @@ static void ble_on_advertisement_received(const bt_addr_le_t* addr, int8_t rssi,
    printk("Passed stop scan\n");
 
   //check if the PICO
-  if (bt_addr_cmp(addr, &TARGET_DEVICE_ADDR) != 0) {
+  if (memcmp(addr->a.val, TARGET_MAC, 6) == 0) {
       return;
   }
   printk("Passed compare\n");
@@ -270,11 +252,7 @@ static uint8_t notify_func(struct bt_conn* conn, struct bt_gatt_subscribe_params
   }
 
   printk("[NOTIFICATION] data %p length %u\n", data, length);
-  for (int i = 0; i < MIN(length, 16); i++) {
-
-    //basically prints it out going byte by byte
-    printk("%d", ((uint8_t*)data)[i]);
-  }
+  printk("%d", ((uint8_t*)data));
   printk("\n");
 
   return BT_GATT_ITER_CONTINUE;
