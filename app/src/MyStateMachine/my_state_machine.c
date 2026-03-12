@@ -21,6 +21,8 @@
 #include "sceneObjects/transitionScreens.h"
 #include "sceneObjects/menuState.h"
 
+#define SLEEP_MS 1
+
 //Forward declarations for scene functions
 static void scene1_enter(void* v_scene, void* o);
 static int scene1_run(void* v_scene, void* o);
@@ -54,7 +56,6 @@ typedef struct {
 
     uint8_t levelCount;
     uint8_t lives;
-    scene topScene;
 
 } game_state_t;
 
@@ -73,23 +74,16 @@ static game_state_t game_state_object;
 
 //Scenes -------------------------------------------------------------
 
-static scene menuStateScene;
-
 static scene transitionStateScene;
 
 //The first minigame scene
 static scene minigameStateScene;
 
-//The first transition scene
-static scene transitionScene;
+//The pool from which to 
 
-static scene scene1 = {
-    .enterFunc = &scene1_enter,
-    .runFunc   = &scene1_run,
-};
-
-static scene menu = {
+static scene menuStateScene = {
     .enterFunc = &menu_enter,
+    .runFunc = &menu_run
 };
 
 static scene redTransition = {
@@ -101,27 +95,6 @@ static scene greenTransition = {
 };
 
 
-static void scene1_enter(void* v_scene, void* o){
-    scene* p_scene = v_scene;
-
-    lv_obj_set_style_bg_color(p_scene->parent, lv_color_hex(0xFF0000), 0); 
-
-    lv_obj_t* rect1 = lv_obj_create(p_scene->parent);
-    lv_obj_set_style_bg_color(rect1, lv_color_hex(0xFFFF00), 0); 
-    lv_obj_set_name(rect1, "rect1");
-
-    lv_screen_load_anim(p_scene->screen,LV_SCR_LOAD_ANIM_MOVE_LEFT,1,1,true);
-
-}
-
-static int scene1_run(void* v_scene, void* o) {
-    scene* p_scene = v_scene;
-    int* val = o;
-    uint8_t value = (*((uint8_t*)val));
-    
-    lv_obj_set_size(getChild(p_scene->parent, "rect1"), LV_PCT(value), LV_PCT(value));
-    return value;
-}
 
 
 
@@ -130,68 +103,78 @@ static int scene1_run(void* v_scene, void* o) {
 
                                                         // Menu
 static void menu_state_entry(void* o) {
-    sceneInit(&menu);
+    printk("enter menu <-------------------\n");
+    
 }
 
 //only runs once the board is connected via BLE
 static enum smf_state_result menu_state_run(void* o) {
+    sceneInit(&greenTransition, false);
+    
+
+    printk("running menu <------------------\n");
+    
+    menuStateScene.runFunc(&menuStateScene, NULL);
+
     smf_set_state(SMF_CTX(&game_state_object), &game_states[TRANSITION_STATE]);
-  
     return SMF_EVENT_HANDLED;
 }
 
 
-//on successful connection
 static void menu_state_exit(void* o) {
-    sceneInit(&greenTransition);
+    printk("exit menu <------------------\n");
 }
 
                                                         //Transition
 static void transition_state_entry(void* o) {
+    printk("enter transition <------------------\n");
 }
 
 static enum smf_state_result transition_state_run(void* o) {
+    printk("running transition <------------------\n");
     return SMF_EVENT_HANDLED;
 }
 
 static void transition_state_exit(void* o) {
+    printk("exit transition <------------------\n");
 }
 
                                                         //Game
 static void minigame_state_entry(void* o) {
-    sceneInit(&scene1);
+    printk("enter minigame <------------------\n");
 }
 
 static enum smf_state_result minigame_state_run(void* o) {
-    scene1.runFunc(&scene1,&game_state_object.levelCount);
-
-    //change to other state
-    if (BTN_check_clear_pressed(BTN1)){
-        smf_set_state(SMF_CTX(&game_state_object), &game_states[MENU_STATE]);
-    } else {
-        BTN_check_clear_pressed_all();
-    }
+    printk("running minigame <------------------\n");
+ 
     return SMF_EVENT_HANDLED;
 }
 
 static void minigame_state_exit(void* o) {
+    printk("exit minigame <------------------\n");
 }
 
                                                         //Loss
 static void loss_state_entry(void* o) {
+    printk("enter loss <------------------\n");
 }
 
 static enum smf_state_result loss_state_run(void* o) {
+    printk("running loss <------------------\n");
     return SMF_EVENT_HANDLED;
 }
 
 static void loss_state_exit(void* o) {
+    printk("exit loss <------------------\n");
 }
 
 //runs on intialization
 void state_machine_init(){
     game_state_object.levelCount = 0;
     game_state_object.lives = 4;
+
+    printk("init state machine <-------------------\n");
+    sceneInit(&menuStateScene, true);
 
     //set some initial state with the state object
     smf_set_initial(SMF_CTX(&game_state_object), &game_states[MENU_STATE]);
@@ -201,11 +184,6 @@ int state_machine_run(){
     //poll the state from the object
     //updates based on states
     lv_timer_handler();
-    game_state_object.levelCount++;
-
-    if (game_state_object.levelCount >= 100) game_state_object.levelCount=0;
-
-
     return smf_run_state(SMF_CTX(&game_state_object));
 }
 

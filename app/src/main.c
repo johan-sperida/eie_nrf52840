@@ -116,17 +116,17 @@ static void ble_on_advertisement_received(const bt_addr_le_t* addr, int8_t rssi,
   }
   printk("Passed rssi\n");
 
+  //check if the PICO
+  if (memcmp(addr->a.val, TARGET_ADDR_LE.a.val, 6) != 0) {
+    printk("failed compare\n");
+    return;
+  }
+  printk("Passed compare\n");
+
   if (bt_le_scan_stop()) {
     return;
   }
    printk("Passed stop scan\n");
-
-  //check if the PICO
-  if (memcmp(addr->a.val, TARGET_ADDR_LE.a.val, 6) != 0) {
-    printk("failed compare\n");
-      return;
-  }
-  printk("Passed compare\n");
 
   err = bt_conn_le_create(addr, BT_CONN_LE_CREATE_CONN, BT_LE_CONN_PARAM_DEFAULT, &my_connection);
   if (err) {
@@ -264,9 +264,9 @@ static uint8_t notify_func(struct bt_conn* conn, struct bt_gatt_subscribe_params
     return BT_GATT_ITER_STOP;
   }
 
-  printk("[NOTIFICATION] data %p length %u\n", data, length);
-  printk("%d", (*((uint8_t*)data)));
-  printk("\n");
+  // printk("[NOTIFICATION] data %p length %u\n", data, length);
+  // printk("%d", (*((uint8_t*)data)));
+  // printk("\n");
 
   return BT_GATT_ITER_CONTINUE;
 }
@@ -304,10 +304,13 @@ int main(void) {
     printk("Bluetooth initialized\n");
   }
 
+  state_machine_init();
+
+  //Load the first screen
+  lv_timer_handler();
+
   ble_start_scanning();
 
-  state_machine_init();
-  
   while(!my_connection){
     printk("Searching");
     k_msleep(SLEEP_MS * 5);

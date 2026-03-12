@@ -18,14 +18,13 @@ typedef struct{
     lv_obj_t* parent;
     lv_obj_t* screen;
     
-
     //must be specific to each scene
     void (*enterFunc)(void* v_scene,void* obj); //creates objects 
     void (*exitFunc)(void* v_scene,void* obj);   //deletes screen
     int (*runFunc)(void* v_scene, void* obj); //does logic
 } scene;
 
-void sceneInit(scene* scene);
+void sceneInit(scene* scene, bool delete_prev_screen);
 
 void sceneClose(scene* scene);
 
