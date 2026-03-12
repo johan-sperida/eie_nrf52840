@@ -25,7 +25,6 @@
 #include "sceneObjects/transitionState.h"
 
 #define SLEEP_MS 1
-#define TIME_CONST 1
 #define MINIGAMES_AMOUNT 2
 
 //Forward declarations for state machine functions
@@ -60,8 +59,10 @@ static const struct smf_state game_states[] = {
     [LOSS_STATE] = SMF_CREATE_STATE(loss_state_entry, loss_state_run, loss_state_exit, NULL, NULL),
 };
 
-//a struct to keep track of state?
+//a struct to keep track of state
 static game_state_t game_state_object;
+
+float time_const = 1.0;
 
 
 //Scenes -------------------------------------------------------------
@@ -155,17 +156,19 @@ static void transition_state_entry(void* o) {
     printk("enter transition <------------------\n");
     scene_Init(&transitionStateScene);
     transitionStateScene.enterFunc(&transitionStateScene, &game_state_object);
-    k_msleep(1000*SLEEP_MS*TIME_CONST);
+    k_msleep(1000*SLEEP_MS*time_const);
 }
 
 static enum smf_state_result transition_state_run(void* o) {
     printk("running transition <------------------\n");
 
     //picking the right minigame
-    int minigame_Index = (sys_rand32_get() % (MINIGAMES_AMOUNT));
+    int minigame_Index = 0;//(sys_rand32_get() % (MINIGAMES_AMOUNT));
     minigameStateScene* p_activeMinigame =  minigamePool[minigame_Index];
+    game_state_object.activeScene = p_activeMinigame->minigame;
 
     transitionStateScene.runFunc(&transitionStateScene, p_activeMinigame);
+    smf_set_state(SMF_CTX(&game_state_object), &game_states[MINIGAME_STATE]);
     return SMF_EVENT_HANDLED;
 }
 
@@ -176,10 +179,18 @@ static void transition_state_exit(void* o) {
                                                         //Game
 static void minigame_state_entry(void* o) {
     printk("enter minigame <------------------\n");
+    scene_Load(game_state_object.activeScene, true);
 }
 
 static enum smf_state_result minigame_state_run(void* o) {
     printk("running minigame <------------------\n");
+    game_state_object.levelCount += 1;
+    int ret = game_state_object.activeScene->runFunc(game_state_object.activeScene, NULL);
+    if (!ret){
+        smf_set_state(SMF_CTX(&game_state_object), &game_states[TRANSITION_STATE]);
+    } else {
+        smf_set_state(SMF_CTX(&game_state_object), &game_states[LOSS_STATE]);
+    }
  
     return SMF_EVENT_HANDLED;
 }
@@ -195,6 +206,8 @@ static void loss_state_entry(void* o) {
 
 static enum smf_state_result loss_state_run(void* o) {
     printk("running loss <------------------\n");
+    game_state_object.lives -= 1;
+    smf_set_state(SMF_CTX(&game_state_object), &game_states[TRANSITION_STATE]);
     return SMF_EVENT_HANDLED;
 }
 

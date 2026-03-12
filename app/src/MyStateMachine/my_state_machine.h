@@ -2,6 +2,7 @@
  * @file  my_state_machine.h
  * */ 
 #include <lvgl.h>
+#include "scenes.h"
 
 #ifndef MY_STATE_MACHINE_H
 #define MY_STATE_MACHINE_H
@@ -13,6 +14,8 @@ typedef struct {
 
     uint8_t levelCount;
     uint8_t lives;
+    scene* activeScene;
+
 
 } game_state_t;
 
@@ -22,5 +25,8 @@ int state_machine_run();
 
 //runs lv_timer_handler a specified number of times
 void lv_load_changes(int loops);
+
+//used to change the speed of the game
+extern float time_const;
 
 #endif // MY STATE MACHINE H

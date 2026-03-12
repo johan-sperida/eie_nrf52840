@@ -304,28 +304,29 @@ int main(void) {
     printk("Bluetooth initialized\n");
   }
 
-  state_machine_init();
+  while(1){
+    state_machine_init();
 
-  //Load the first screen
-  lv_timer_handler();
+    //Load the first screen
+    lv_timer_handler();
 
-  ble_start_scanning();
+    ble_start_scanning();
 
-  while(!my_connection){
-    printk("Searching\n");
-    k_msleep(SLEEP_MS * 5);
-  }
+    while(!my_connection){
+      printk("Searching\n");
+      k_msleep(SLEEP_MS * 5);
+    }
 
-  
+    
 
-  int ret;
-  while (1) {
-    //must call periodically to render changes
-    ret = state_machine_run();
-    k_msleep(SLEEP_MS);
-  }
+    int ret;
+    while (my_connection) {
+      //must call periodically to render changes
+      ret = state_machine_run();
+      k_msleep(SLEEP_MS);
+    }
 
-  // To disconnect: bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
-
+    // To disconnect: bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+}
   return 0;
 }

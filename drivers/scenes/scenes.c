@@ -31,7 +31,7 @@ void scene_Load(scene* p_scene, bool delete_prev_screen){
   if (scene_Init(p_scene) == 0){
     p_scene->enterFunc(p_scene, &delete_prev_screen);
     //have to run this to allow the screen transition to finish
-    lv_load_changes(100);
+    lv_load_changes(300);
   }
    
 }
