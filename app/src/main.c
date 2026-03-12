@@ -44,7 +44,13 @@
 
 
 /* Target MAC: D8:3A:DD:9C:C0:19 */
-static const uint8_t TARGET_MAC[6] = {0xD8, 0x3A, 0xDD, 0x9C, 0xC0, 0x19};
+
+static const bt_addr_t TARGET_ADDR = { .val = {0x19, 0xC0, 0x9C, 0xDD, 0x3A, 0xD8}};
+
+static const bt_addr_le_t TARGET_ADDR_LE = {
+  .type = 1,
+  .a = TARGET_ADDR
+};
 
 /* Distance Sense Service: aafcf96d-f5b8-47d3-9da2-00a610c3a1f9 */
 static struct bt_uuid_16 DISTANCE_SENSE_SERVICE_UUID = 
@@ -116,7 +122,8 @@ static void ble_on_advertisement_received(const bt_addr_le_t* addr, int8_t rssi,
    printk("Passed stop scan\n");
 
   //check if the PICO
-  if (memcmp(addr->a.val, TARGET_MAC, 6) != 0) {
+  if (memcmp(addr->a.val, TARGET_ADDR_LE.a.val, 6) != 0) {
+    printk("failed compare\n");
       return;
   }
   printk("Passed compare\n");
@@ -300,6 +307,13 @@ int main(void) {
   ble_start_scanning();
 
   state_machine_init();
+  
+  while(!my_connection){
+    printk("Searching");
+    k_msleep(SLEEP_MS * 5);
+  }
+
+  
 
   int ret;
   while (1) {

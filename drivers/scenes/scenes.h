@@ -12,7 +12,7 @@
 #include "LED.h"
 #include "lv_data_obj.h"
 
-
+#pragma once
 
 typedef struct{
     lv_obj_t* parent;

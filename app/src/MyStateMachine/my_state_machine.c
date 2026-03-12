@@ -18,11 +18,12 @@
 #include "scenes.h"
 #include "my_state_machine.h"
 
+#include "sceneObjects/transitionScreens.h"
+#include "sceneObjects/menuState.h"
+
 //Forward declarations for scene functions
 static void scene1_enter(void* v_scene, void* o);
 static int scene1_run(void* v_scene, void* o);
-static void scene2_enter(void* v_scene, void* o);
-static int scene2_run(void* v_scene, void* o);
 
 //Forward declarations for state machine functions
 static void menu_state_entry(void* o);
@@ -87,9 +88,16 @@ static scene scene1 = {
     .runFunc   = &scene1_run,
 };
 
-static scene scene2 = {
-    .enterFunc = &scene2_enter,
-    .runFunc   = &scene2_run,
+static scene menu = {
+    .enterFunc = &menu_enter,
+};
+
+static scene redTransition = {
+    .enterFunc = &redTransition_enter,
+};
+
+static scene greenTransition = {
+    .enterFunc = &greenTransition_enter,
 };
 
 
@@ -112,51 +120,30 @@ static int scene1_run(void* v_scene, void* o) {
     uint8_t value = (*((uint8_t*)val));
     
     lv_obj_set_size(getChild(p_scene->parent, "rect1"), LV_PCT(value), LV_PCT(value));
+    return value;
 }
 
 
-static void scene2_enter(void* v_scene, void* o){
-  scene* p_scene = v_scene;
 
-  lv_obj_set_style_bg_color(p_scene->parent, lv_color_hex(0x000000), 0);  // Black background
 
-  lv_obj_t* label2 = lv_label_create(p_scene->parent);
-  lv_label_set_text(label2, "Start");
-  lv_obj_set_name(label2, "label2");
-
-  lv_screen_load_anim(p_scene->screen,LV_SCR_LOAD_ANIM_FADE_IN,1,1,true);
-}
-
-static int scene2_run(void* v_scene, void* o) {
-    scene* p_scene = v_scene;
-    int* val = o;
-    char buffer[16];
-    uint8_t value = (*((uint8_t*)val));
-    sprintf(buffer, "%d", value);
-    lv_label_set_text(getChild(p_scene->parent, "label2"), buffer);
-    
-
-} 
-
+/*STATE FUNCS -------------------------------------------------------------------*/
 
                                                         // Menu
 static void menu_state_entry(void* o) {
-    sceneInit(&scene2);
+    sceneInit(&menu);
 }
 
+//only runs once the board is connected via BLE
 static enum smf_state_result menu_state_run(void* o) {
-    scene2_run(&scene2,&game_state_object.levelCount);
-
-
-    if (BTN_check_clear_pressed(BTN0)){
-        smf_set_state(SMF_CTX(&game_state_object), &game_states[MINIGAME_STATE]);
-    } else {
-            BTN_check_clear_pressed_all();
-    }
+    smf_set_state(SMF_CTX(&game_state_object), &game_states[TRANSITION_STATE]);
+  
     return SMF_EVENT_HANDLED;
 }
 
+
+//on successful connection
 static void menu_state_exit(void* o) {
+    sceneInit(&greenTransition);
 }
 
                                                         //Transition
@@ -182,7 +169,7 @@ static enum smf_state_result minigame_state_run(void* o) {
     if (BTN_check_clear_pressed(BTN1)){
         smf_set_state(SMF_CTX(&game_state_object), &game_states[MENU_STATE]);
     } else {
-            BTN_check_clear_pressed_all();
+        BTN_check_clear_pressed_all();
     }
     return SMF_EVENT_HANDLED;
 }
