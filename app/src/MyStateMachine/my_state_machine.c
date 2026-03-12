@@ -8,6 +8,7 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/drivers/display.h>
 #include <zephyr/device.h>
+#include <zephyr/random/random.h>
 
 
 #include <lvgl.h>
@@ -20,12 +21,12 @@
 
 #include "sceneObjects/transitionScreens.h"
 #include "sceneObjects/menuState.h"
+#include "sceneObjects/minigameState.h"
+#include "sceneObjects/transitionState.h"
 
 #define SLEEP_MS 1
-
-//Forward declarations for scene functions
-static void scene1_enter(void* v_scene, void* o);
-static int scene1_run(void* v_scene, void* o);
+#define TIME_CONST 1
+#define MINIGAMES_AMOUNT 2
 
 //Forward declarations for state machine functions
 static void menu_state_entry(void* o);
@@ -41,6 +42,7 @@ static void loss_state_entry(void* o);
 static enum smf_state_result loss_state_run(void* o);
 static void loss_state_exit(void* o);
 
+
 //Typedefs
 enum game_states {
     MENU_STATE,
@@ -48,16 +50,6 @@ enum game_states {
     MINIGAME_STATE,
     LOSS_STATE
 };
-
-//"typedef" makes it so that you don't have to write "sturct" next to the name each time when intiializing
-typedef struct {
-    //context variable for machines state
-    struct smf_ctx ctx;
-
-    uint8_t levelCount;
-    uint8_t lives;
-
-} game_state_t;
 
 // Local vars
 // Define the state table using the enum values and naming conventions
@@ -74,12 +66,40 @@ static game_state_t game_state_object;
 
 //Scenes -------------------------------------------------------------
 
-static scene transitionStateScene;
+static scene transitionStateScene = {
+    .enterFunc = transition_enter,
+    .runFunc =transition_run
+};
 
-//The first minigame scene
-static scene minigameStateScene;
+//minigames ---------------------------------
+static scene countMinigameScene = {
+    .enterFunc = &count_enter,
+    .runFunc = &count_run
+};
 
-//The pool from which to 
+static minigameStateScene countMinigame = {
+    .minigame = &countMinigameScene,
+    .name = "Count!",
+    .controls = "[Use Screen]"
+};
+
+static scene alignMinigameScene = {
+    .enterFunc = &align_enter,
+    .runFunc = &align_run
+};
+
+static minigameStateScene alignMinigame = {
+    .minigame = &alignMinigameScene,
+    .name = "Align!",
+    .controls = "[Use Sensor]"
+};
+
+//The pool from which to pick a minigame
+static minigameStateScene* minigamePool[MINIGAMES_AMOUNT] = {
+    &countMinigame, 
+    &alignMinigame
+};
+//---------------------------------
 
 static scene menuStateScene = {
     .enterFunc = &menu_enter,
@@ -87,15 +107,20 @@ static scene menuStateScene = {
 };
 
 static scene redTransition = {
-    .enterFunc = &redTransition_enter,
+    .enterFunc = &red_Transition_Screen_enter,
 };
 
 static scene greenTransition = {
-    .enterFunc = &greenTransition_enter,
+    .enterFunc = &green_Transition_Screen_enter,
 };
 
 
-
+void lv_load_changes(int loops) {
+    for (int i = 0; i < loops; i++){
+        lv_timer_handler();
+        k_msleep(1);
+    }
+}
 
 
 
@@ -105,14 +130,14 @@ static scene greenTransition = {
 static void menu_state_entry(void* o) {
     printk("enter menu <-------------------\n");
     
+    
 }
 
 //only runs once the board is connected via BLE
 static enum smf_state_result menu_state_run(void* o) {
-    sceneInit(&greenTransition, false);
-    
-
     printk("running menu <------------------\n");
+    //gotta be here otherwise it would run too upon startup
+    scene_Load(&greenTransition, false);
     
     menuStateScene.runFunc(&menuStateScene, NULL);
 
@@ -128,10 +153,19 @@ static void menu_state_exit(void* o) {
                                                         //Transition
 static void transition_state_entry(void* o) {
     printk("enter transition <------------------\n");
+    scene_Init(&transitionStateScene);
+    transitionStateScene.enterFunc(&transitionStateScene, &game_state_object);
+    k_msleep(1000*SLEEP_MS*TIME_CONST);
 }
 
 static enum smf_state_result transition_state_run(void* o) {
     printk("running transition <------------------\n");
+
+    //picking the right minigame
+    int minigame_Index = (sys_rand32_get() % (MINIGAMES_AMOUNT));
+    minigameStateScene* p_activeMinigame =  minigamePool[minigame_Index];
+
+    transitionStateScene.runFunc(&transitionStateScene, p_activeMinigame);
     return SMF_EVENT_HANDLED;
 }
 
@@ -174,7 +208,7 @@ void state_machine_init(){
     game_state_object.lives = 4;
 
     printk("init state machine <-------------------\n");
-    sceneInit(&menuStateScene, true);
+    scene_Load(&menuStateScene, true);
 
     //set some initial state with the state object
     smf_set_initial(SMF_CTX(&game_state_object), &game_states[MENU_STATE]);

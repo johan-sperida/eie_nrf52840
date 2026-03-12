@@ -14,6 +14,6 @@
 #include "MyStateMachine/my_state_machine.h"
 
 
-void greenTransition_enter (void* v_scene, void* o);
+void green_Transition_Screen_enter (void* v_scene, void* o);
 
-void redTransition_enter (void* v_scene, void* o);
+void red_Transition_Screen_enter (void* v_scene, void* o);

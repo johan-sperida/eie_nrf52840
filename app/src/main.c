@@ -312,7 +312,7 @@ int main(void) {
   ble_start_scanning();
 
   while(!my_connection){
-    printk("Searching");
+    printk("Searching\n");
     k_msleep(SLEEP_MS * 5);
   }
 

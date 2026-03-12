@@ -1,6 +1,6 @@
 #include "transitionScreens.h"
 
-void greenTransition_enter (void* v_scene, void* o){
+void green_Transition_Screen_enter  (void* v_scene, void* o){
     scene* p_scene = v_scene;
     bool* p_delete_screen = o;
 
@@ -9,7 +9,7 @@ void greenTransition_enter (void* v_scene, void* o){
 
 }
 
-void redTransition_enter (void* v_scene, void* o){
+void red_Transition_Screen_enter  (void* v_scene, void* o){
     scene* p_scene = v_scene;
 
     lv_obj_set_style_bg_color(p_scene->parent, lv_color_hex(0xFF0000), 0); 

@@ -22,7 +22,7 @@ void menu_enter(void* v_scene, void* o){
   lv_obj_set_style_bg_color(p_scene->parent, lv_color_hex(0xFF0000), 0);  // RED
 
   lv_obj_t* labelMenu = lv_label_create(p_scene->parent);
-  lv_label_set_text(labelMenu, "Connecting");
+  lv_label_set_text(labelMenu, "Connecting...");
   lv_obj_align(labelMenu, LV_ALIGN_CENTER, 0, 0);
   lv_obj_set_name(labelMenu, "labelMenu");
 
@@ -59,8 +59,7 @@ int menu_run(void* v_scene, void* o){
 
   printk("button awaiting %d <----------", *button_pressed);
   while (!(*button_pressed)) {
-      lv_timer_handler();
-      k_msleep(SLEEP_MS);
+      lv_load_changes(1);
   }
 
   printk("button pressed %d <----------", *button_pressed);

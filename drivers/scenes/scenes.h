@@ -20,11 +20,16 @@ typedef struct{
     
     //must be specific to each scene
     void (*enterFunc)(void* v_scene,void* obj); //creates objects 
-    void (*exitFunc)(void* v_scene,void* obj);   //deletes screen
+    void (*exitFunc)(void* v_scene,void* obj);   //deletes screen (if necessary)
     int (*runFunc)(void* v_scene, void* obj); //does logic
 } scene;
 
-void sceneInit(scene* scene, bool delete_prev_screen);
+
+//returns -1 if scene already initialized, 0 otherwise
+int scene_Init(scene* p_scene);
+
+//runs scene_Init, and loads the scene
+void scene_Load(scene* scene, bool delete_prev_screen);
 
 void sceneClose(scene* scene);
 

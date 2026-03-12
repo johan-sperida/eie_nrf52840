@@ -17,4 +17,5 @@ target_sources(app PRIVATE src/MyStateMachine/my_state_machine.c)
 target_sources(app PRIVATE src/MyStateMachine/sceneObjects/transitionScreens.c)
 target_sources(app PRIVATE src/MyStateMachine/sceneObjects/menuState.c)
 target_sources(app PRIVATE src/MyStateMachine/sceneObjects/transitionState.c)
+target_sources(app PRIVATE src/MyStateMachine/sceneObjects/minigameState.c)
 

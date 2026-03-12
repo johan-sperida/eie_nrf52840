@@ -12,23 +12,28 @@
 #include "LED.h"
 #include "lv_data_obj.h"
 #include "scenes.h"
+#include "MyStateMachine/my_state_machine.h"
   
 #define SLEEP_MS 1
 
-void sceneInit(scene* p_scene, bool delete_prev_screen){
+int scene_Init(scene* p_scene) {
   if (!lv_obj_is_valid(p_scene->screen)){
     p_scene->screen = lv_obj_create(NULL);
     p_scene->parent = lv_obj_create(p_scene->screen);
     lv_obj_set_size(p_scene->parent, LV_PCT(100), LV_PCT(100));
-    p_scene->enterFunc(p_scene, &delete_prev_screen);
-
-    //have to run this to allow the screen transition to finish
-    for (int i = 0; i < 2000; i++){
-        lv_timer_handler();
-        k_msleep(SLEEP_MS);
-    }
+    return 0;
+  } else {
+    return -1;
   }
-    
+}
+
+void scene_Load(scene* p_scene, bool delete_prev_screen){
+  if (scene_Init(p_scene) == 0){
+    p_scene->enterFunc(p_scene, &delete_prev_screen);
+    //have to run this to allow the screen transition to finish
+    lv_load_changes(100);
+  }
+   
 }
 
 void reset(scene* p_scene){
