@@ -1,6 +1,7 @@
 #include "minigameState.h"
 #include "MyStateMachine/my_state_machine.h"
 #include <zephyr/random/random.h>
+#include <stdio.h>
 typedef struct {
     int* p_output;
     int val;

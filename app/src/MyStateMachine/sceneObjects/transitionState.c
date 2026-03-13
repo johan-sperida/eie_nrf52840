@@ -1,6 +1,7 @@
 
 #include "transitionState.h"
 #include "minigameState.h"
+#include "MyStateMachine/my_state_machine.h"
 #include <stdio.h>
 
 void transition_enter (void* v_scene, void* v_game_state_object){

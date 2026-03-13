@@ -13,7 +13,7 @@
 #include "lv_data_obj.h"
 #include "scenes.h"
 #include "MyStateMachine/my_state_machine.h"
-  
+
 #define SLEEP_MS 1
 
 int scene_Init(scene* p_scene) {

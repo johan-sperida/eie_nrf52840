@@ -1,4 +1,6 @@
 #include "transitionScreens.h"
+#include "scenes.h"
+#include <stdbool.h>
 
 void green_Transition_Screen_enter  (void* v_scene, void* o){
     scene* p_scene = v_scene;

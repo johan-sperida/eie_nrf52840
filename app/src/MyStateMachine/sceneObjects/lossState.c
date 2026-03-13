@@ -1,4 +1,5 @@
 #include "lossState.h"
+#include "scenes.h"
 
 void loss_enter(void* v_scene, void* o){
   scene* p_scene = v_scene;
