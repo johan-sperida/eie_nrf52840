@@ -23,7 +23,9 @@ int scene_Init(scene* p_scene) {
     lv_obj_set_size(p_scene->parent, LV_PCT(100), LV_PCT(100));
     return 0;
   } else {
-    return -1;
+    lv_obj_delete(p_scene->screen);    
+    scene_Init(p_scene);
+    return 0;
   }
 }
 

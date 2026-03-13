@@ -23,6 +23,7 @@
 #include "sceneObjects/menuState.h"
 #include "sceneObjects/minigameState.h"
 #include "sceneObjects/transitionState.h"
+#include "sceneObjects/lossState.h"
 
 #define SLEEP_MS 1
 #define MINIGAMES_AMOUNT 2
@@ -70,6 +71,10 @@ float time_const = 1.0;
 static scene transitionStateScene = {
     .enterFunc = transition_enter,
     .runFunc =transition_run
+};
+
+static scene lossStateScene = {
+    .enterFunc = &loss_enter
 };
 
 //minigames ---------------------------------
@@ -154,8 +159,10 @@ static void menu_state_exit(void* o) {
                                                         //Transition
 static void transition_state_entry(void* o) {
     printk("enter transition <------------------\n");
-    scene_Init(&transitionStateScene);
+    printk("%d", scene_Init(&transitionStateScene));
+    printk("init passed\n");
     transitionStateScene.enterFunc(&transitionStateScene, &game_state_object);
+    printk("Scene enter done\n");
     k_msleep(1000*SLEEP_MS*time_const);
 }
 
@@ -185,11 +192,23 @@ static void minigame_state_entry(void* o) {
 static enum smf_state_result minigame_state_run(void* o) {
     printk("running minigame <------------------\n");
     game_state_object.levelCount += 1;
+    time_const = (float) 8.0 / (float) (game_state_object.levelCount + 10.0);
     int ret = game_state_object.activeScene->runFunc(game_state_object.activeScene, NULL);
     if (!ret){
+        scene_Load(&greenTransition, true);
         smf_set_state(SMF_CTX(&game_state_object), &game_states[TRANSITION_STATE]);
     } else {
-        smf_set_state(SMF_CTX(&game_state_object), &game_states[LOSS_STATE]);
+        scene_Load(&redTransition, true);
+        if (game_state_object.lives == 1){
+            printk("loss\n");
+            smf_set_state(SMF_CTX(&game_state_object), &game_states[LOSS_STATE]);
+
+        } else {
+            printk("normal loss\n");
+            game_state_object.lives -= 1;
+            smf_set_state(SMF_CTX(&game_state_object), &game_states[TRANSITION_STATE]);
+        }
+        
     }
  
     return SMF_EVENT_HANDLED;
@@ -202,12 +221,11 @@ static void minigame_state_exit(void* o) {
                                                         //Loss
 static void loss_state_entry(void* o) {
     printk("enter loss <------------------\n");
+    scene_Load(&lossStateScene, true);
 }
 
 static enum smf_state_result loss_state_run(void* o) {
     printk("running loss <------------------\n");
-    game_state_object.lives -= 1;
-    smf_set_state(SMF_CTX(&game_state_object), &game_states[TRANSITION_STATE]);
     return SMF_EVENT_HANDLED;
 }
 

@@ -6,19 +6,23 @@
 void transition_enter (void* v_scene, void* v_game_state_object){
     scene* p_scene = v_scene;
     game_state_t* game_state_object = v_game_state_object;
-
+    printk("passed initial\n");
+    printk("if %d", lv_obj_is_valid(p_scene->parent));
     lv_obj_set_style_bg_color(p_scene->parent, lv_color_hex(0xFFFFFF), 0);  // WHITE
-
+    printk("passed colour\n");
     lv_obj_t* labelLives = lv_label_create(p_scene->parent);
     char buf[64];
     sprintf(buf,"Level: %d \n\nLives: %d", game_state_object->levelCount, game_state_object->lives);
     lv_label_set_text(labelLives, buf);
     lv_obj_align(labelLives, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_name(labelLives, "labelMenu");
+     printk("passed label\n");
+
 
     lv_screen_load_anim(p_scene->screen,LV_SCR_LOAD_ANIM_FADE_IN,0,0,true);
 
     lv_load_changes(300);
+    printk("passed label\n");
 }
 
 int transition_run (void* v_scene, void* v_activeMinigame){

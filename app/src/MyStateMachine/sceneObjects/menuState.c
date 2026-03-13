@@ -24,7 +24,6 @@ void menu_enter(void* v_scene, void* o){
   lv_obj_t* labelMenu = lv_label_create(p_scene->parent);
   lv_label_set_text(labelMenu, "Connecting...");
   lv_obj_align(labelMenu, LV_ALIGN_CENTER, 0, 0);
-  lv_obj_set_name(labelMenu, "labelMenu");
 
   lv_screen_load_anim(p_scene->screen,LV_SCR_LOAD_ANIM_FADE_IN,0,0,true);
 }

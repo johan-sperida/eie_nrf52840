@@ -35,6 +35,13 @@ void count_enter(void* v_scene, void* o){
         .val = 0
     };
 
+    lv_obj_t* timer = lv_label_create(p_scene->parent);
+    char buf[64];
+    sprintf(buf,"%d",(int) (5000 * time_const));
+    lv_label_set_text(timer, buf);
+    lv_obj_set_name(timer,"timer");
+    lv_obj_align(timer, LV_ALIGN_TOP_RIGHT, 0, 0);
+
     for (int i = 0; i < 4; i++) {
         lv_obj_t *ui_btn = lv_button_create(p_scene->parent);
         // place the buttons in a 2x2 grid in the center of the screen
@@ -59,9 +66,11 @@ void count_enter(void* v_scene, void* o){
 
 
 int count_run(void* v_scene, void* o){
+    scene* p_scene = v_scene;
 
     //so that the index starts at 0
     int i = 0;
+    int timediff = 0;
     
     //timer
     int start = k_uptime_get();
@@ -85,8 +94,16 @@ int count_run(void* v_scene, void* o){
         if(i > 3)
             return 0;
 
+
+        //Set timer
+        
+        timediff = k_uptime_get() - start;
+        char buf[64];
+        sprintf(buf,"%d", (int) (5000 * time_const - timediff));
+        lv_label_set_text(getChild(p_scene->parent, "timer"), buf); 
         //Lose if you take too long!
-        if(k_uptime_get() - start > 5000 * time_const)
+        printk("%f", time_const);
+        if( timediff > 5000 * time_const)
             return 1;
     }
     
