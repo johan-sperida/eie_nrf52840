@@ -12,6 +12,7 @@ project(app LANGUAGES C)
 zephyr_include_directories(src)
 
 target_sources(app PRIVATE src/main.c)
+target_sources(app PRIVATE src/ble_manager.c)
 target_sources(app PRIVATE src/MyStateMachine/my_state_machine.c)
 
 target_sources(app PRIVATE src/MyStateMachine/sceneObjects/transitionScreens.c)
